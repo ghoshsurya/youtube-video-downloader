@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Fast and free YouTube video downloader." />
+  <meta name="keywords" content="YouTube, video downloader, mp4 download, free downloader" />
+  <meta name="author" content="Your Name" />
+  <title>YouTube Video Downloader</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>YouTube Video Downloader</h1>
+    <form method="post">
+      <input type="url" name="video_url" placeholder="Enter YouTube link..." required>
+      <button type="submit">Download</button>
+    </form>
+    {% if error %}
+      <p class="error">{{ error }}</p>
+    {% endif %}
+  </div>
+</body>
+</html>
