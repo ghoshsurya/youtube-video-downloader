@@ -1,39 +1,38 @@
-from flask import Flask, render_template, request, send_file, redirect, url_for
-import yt_dlp
+from flask import Flask, render_template, request, send_file
 import os
-import uuid
+import yt_dlp
+from pathlib import Path
 
 app = Flask(__name__)
 
-DOWNLOAD_DIR = "downloads"
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+DOWNLOAD_FOLDER = "downloads/videos"
+os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
-@app.route('/', methods=['GET', 'POST'])
+def download_video_no_ffmpeg(youtube_url):
+    ydl_opts = {
+        'format': 'best[ext=mp4][height>=144]',
+        'outtmpl': f'{DOWNLOAD_FOLDER}/%(title).100s.%(ext)s',
+        'quiet': True,
+        'noplaylist': True
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info_dict = ydl.extract_info(youtube_url, download=True)
+        video_title = ydl.prepare_filename(info_dict)
+    return video_title
+
+@app.route('/')
 def index():
-    if request.method == 'POST':
-        url = request.form.get('url')
-
-        if not url:
-            return render_template('index.html', error="Please enter a video URL.")
-
-        filename = f"{uuid.uuid4()}.mp4"
-        output_path = os.path.join(DOWNLOAD_DIR, filename)
-
-        ydl_opts = {
-            'format': 'best',
-            'outtmpl': output_path,
-        }
-
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
-        except Exception as e:
-            return render_template('index.html', error=f"Download failed: {str(e)}")
-
-        return send_file(output_path, as_attachment=True)
-
     return render_template('index.html')
 
+@app.route('/download', methods=['POST'])
+def download():
+    video_url = request.form['url']
+    try:
+        file_path = download_video_no_ffmpeg(video_url)
+        return send_file(file_path, as_attachment=True)
+    except Exception as e:
+        return f"<h3>Error downloading video: {str(e)}</h3>"
+
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(debug=True)
